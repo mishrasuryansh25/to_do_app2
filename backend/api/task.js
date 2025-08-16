@@ -1,7 +1,8 @@
 const express = require("express");
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
-
+//imports zod schema from taskvalidation file 
+const { createTaskSchema, updateTaskSchema,taskIdSchema} = require("./validation");
 const router = express.Router();
 
 // Verify token
@@ -21,12 +22,16 @@ function authenticate(req, res, next) {
 router.post("/", authenticate, async (req, res) => {
     const { title, description } = req.body;
     try {
+        const parsed = createTaskSchema.parse(req.body); //this validate the input
         const result = await pool.query(
             "INSERT INTO task.tasks (user_id, title, description) VALUES ($1, $2, $3) RETURNING *",
-            [req.user.id, title, description] 
+            [req.user.id, parsed.title, parsed.description || null] //null because description is optional
         );
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.name=="ZOD Error"){
+            return res.status(400).json({errors: err.errors.map(e=>e.message )});
+        }
         res.status(500).json({ error: err.message });
     }
 });
@@ -46,14 +51,19 @@ router.get("/", authenticate, async (req, res) => {
 router.put("/:id", authenticate, async (req, res) => {
     const { title, description, completed } = req.body;
     try {
+        const {id} = taskIdSchema.parse(req.params); //this validate the id parameters 
+        const parsed = updateTaskSchema.parse(req.body); //this validate the update part of task
         const result = await pool.query(
             "UPDATE task.tasks SET title = $1, description = $2, completed = $3 WHERE id = $4 AND user_id = $5 RETURNING *",
-            [title, description, completed, req.params.id, req.user.id] // Fix req.params.id
+            [parsed.title, parsed.description||null, parsed.completed, id, req.user.id] // Fix req.params.id
         );
         if (result.rows.length === 0)
             return res.status(404).json({ error: "Task not found" });
         res.json(result.rows[0]);
     } catch (err) {
+        if (err.name == "ZOD ERROR"){
+            return res.status(400).json({errors: err.errors.map(e=>e.message )});
+        }
         res.status(500).json({ error: err.message });
     }
 });
@@ -61,14 +71,18 @@ router.put("/:id", authenticate, async (req, res) => {
 //(D-delete)Delete task
 router.delete("/:id", authenticate, async (req, res) => {
     try {
+        const { id } = taskIdSchema.parse(req.params); //this validate id parameters
         const result = await pool.query(
             "DELETE FROM task.tasks WHERE id = $1 AND user_id = $2 RETURNING *",
-            [req.params.id, req.user.id]
+            [id, req.user.id]
         );
         if (result.rows.length === 0)
             return res.status(404).json({ error: "Task not found" });
         res.json({ message: "Your task is deleted" });
     } catch (err) {
+        if (err.name == "ZOD ERROR"){
+            return res.status(400).json({errors: err.errors.map(e=>e.message )});
+        }
         res.status(500).json({ error: err.message });
     }
 });

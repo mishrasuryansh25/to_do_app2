@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const pool = require("../db");
 require("dotenv").config();
+//imports zod schema from validation file
 const { registerSchema, loginSchema} = require("./validation");
 
 
