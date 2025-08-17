@@ -29,7 +29,7 @@ router.post("/", authenticate, async (req, res) => {
         );
         res.json(result.rows[0]);
     } catch (err) {
-        if (err.name=="ZOD Error"){
+        if (err.name=="ZodError"){
             return res.status(400).json({errors: err.errors.map(e=>e.message )});
         }
         res.status(500).json({ error: err.message });
@@ -61,7 +61,7 @@ router.put("/:id", authenticate, async (req, res) => {
             return res.status(404).json({ error: "Task not found" });
         res.json(result.rows[0]);
     } catch (err) {
-        if (err.name == "ZOD ERROR"){
+        if (err.name == "ZodERROR"){
             return res.status(400).json({errors: err.errors.map(e=>e.message )});
         }
         res.status(500).json({ error: err.message });
@@ -80,7 +80,7 @@ router.delete("/:id", authenticate, async (req, res) => {
             return res.status(404).json({ error: "Task not found" });
         res.json({ message: "Your task is deleted" });
     } catch (err) {
-        if (err.name == "ZOD ERROR"){
+        if (err.name == "ZodERROR"){
             return res.status(400).json({errors: err.errors.map(e=>e.message )});
         }
         res.status(500).json({ error: err.message });

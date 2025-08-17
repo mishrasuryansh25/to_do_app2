@@ -21,7 +21,7 @@ router.post("/register", async (req, res) => {
         );
         res.json({ message: "Welcome! Registered successfully" });
     } catch (err) {
-        if(err.name ==="Zod Error"){
+        if(err.name ==="ZodError"){
             return res.status(404).json({errors: err.errors.map(e=>e.message) }); // thorws error 
         }
         res.status(500).json({ error: err.message });
@@ -48,7 +48,7 @@ router.post("/login", async (req, res) => {
         const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: "1h" });
         res.json({ token });
     } catch (err) {
-        if(err.name === "Zod error"){
+        if(err.name === "ZodError"){
             return res.status(400).json({errors: err.errors.map(e=> e.message)}); //throws error 
         }
         res.status(500).json({ error: err.message });
