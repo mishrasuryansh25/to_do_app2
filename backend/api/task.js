@@ -2,7 +2,7 @@ const express = require("express");
 const pool = require("../db");
 const jwt = require("jsonwebtoken");
 //imports zod schema from taskvalidation file 
-const { createTaskSchema, updateTaskSchema,taskIdSchema} = require("./validation");
+const { createTaskSchema, updateTaskSchema, taskIdSchema} = require("./taskvalidation");
 const router = express.Router();
 
 // Verify token

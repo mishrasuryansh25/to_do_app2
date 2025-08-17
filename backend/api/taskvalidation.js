@@ -1,8 +1,8 @@
 
 //ZOD implementation for task(CRUD)
-const {z} = require("zod");
+const { z } = require("zod");
 //create validation
-const createTaskScehma = z.object({
+const createTaskSchema = z.object({
     title : z.string().min(1,"Title is required"),
     description : z.string().optional()
 });
@@ -19,4 +19,4 @@ const taskIdSchema = z.object({
     id: z.string().regex(/^\d+$/, "Task ID must be a number")
 });
 
-module.exports= { createTaskScehma,updateTaskSchema,taskIdSchema };
+module.exports= { createTaskSchema,updateTaskSchema,taskIdSchema };
