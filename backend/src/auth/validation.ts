@@ -1,4 +1,3 @@
-import { password } from "pg/lib/defaults";
 import {z} from "zod";
 
 export const registerSchema=z.object({

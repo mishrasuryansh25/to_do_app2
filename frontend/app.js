@@ -23,6 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (toggleText) updateForm();
 
+  // Auth form
   const authForm = document.getElementById("auth-form");
   if (authForm) {
     authForm.addEventListener("submit", async (e) => {
@@ -59,15 +60,17 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.removeItem("token");
       window.location.href = "index.html";
     });
+
     loadTasks();
 
-    // Handle Add Task
+    // Add Task
     const taskForm = document.getElementById("task-form");
     if (taskForm) {
       taskForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         const title = document.getElementById("task-title").value.trim();
         const description = document.getElementById("task-desc").value.trim();
+        const status = document.getElementById("task-status").value;
         if (!title || !description) return alert("Fill in all fields");
 
         try {
@@ -78,7 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
               "Content-Type": "application/json", 
               Authorization: `Bearer ${token}` 
             },
-            body: JSON.stringify({ title, description }),
+            body: JSON.stringify({ title, description, status }),
           });
           const data = await res.json();
           if (res.ok) {
@@ -114,12 +117,13 @@ async function loadTasks() {
     const data = await res.json();
 
     tasksList.innerHTML = "";
-    if (res.ok && data.tasks) {
-      data.tasks.forEach((task) => {
+
+    if (res.ok && Array.isArray(data)) {
+      data.forEach((task) => {
         const li = document.createElement("li");
         li.innerHTML = `
           <strong>${task.title}</strong> - ${task.status} <br/>
-          <small>${task.description}</small><br/>
+          <small>${task.description || ""}</small><br/>
           <select class="status-select">
             <option value="pending" ${task.status === "pending" ? "selected" : ""}>Pending</option>
             <option value="in-progress" ${task.status === "in-progress" ? "selected" : ""}>In Progress</option>
@@ -154,19 +158,25 @@ async function loadTasks() {
         tasksList.appendChild(li);
       });
 
-      // Show stats
+      // Stats calculation
       if (statsDiv) {
+        const total = data.length;
+        const completed = data.filter(t => t.status === "completed").length;
+        const pending = data.filter(t => t.status === "pending").length;
+        const inProgress = data.filter(t => t.status === "in-progress").length;
+
         statsDiv.innerHTML = `
-          <p>Total: ${data.stats.total}</p>
-          <p>Completed: ${data.stats.completed}</p>
-          <p>Pending: ${data.stats.pending}</p>
-          <p>In Progress: ${data.stats.inProgress}</p>
+          <p>Total: ${total}</p>
+          <p>Completed: ${completed}</p>
+          <p>Pending: ${pending}</p>
+          <p>In Progress: ${inProgress}</p>
         `;
       }
     } else {
-      alert(data.message || "Failed to load tasks");
+      alert("Failed to load tasks");
     }
   } catch (err) {
     console.error(err);
+    alert("Failed to load tasks due to server error");
   }
 }
