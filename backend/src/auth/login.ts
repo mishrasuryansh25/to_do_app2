@@ -19,7 +19,7 @@ router.post("/",async(req:Request, res:Response) => {
         if (!isPasswordValid) {
         return res.status(400).json({ error: "Invalid username or password" });
         }
-        //this section of code generates the token 
+        //generates the token 
         const token = jwt.sign(
             { id: user.id, username: user.username }, 
             process.env.JWT_SECRET as string,

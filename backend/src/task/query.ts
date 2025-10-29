@@ -7,15 +7,15 @@ export const insertTask = async (task: TaskInput, userId: number) => {
     data: {
       title: task.title,
       description: task.description,
-      status: task.status || "pending", // default value
+      status: task.status || "pending",
       user: {
-        connect: { id: userId }, // link to the logged-in user
+        connect: { id: userId },
       },
     },
   });
 };
 
-// READ tasks (optional: filter by user)
+// READ tasks
 export const getTasks = async (userId?: number) => {
   return await prisma.task.findMany({
     where: userId ? { userId } : {},
@@ -24,9 +24,9 @@ export const getTasks = async (userId?: number) => {
 
 // UPDATE task
 export const updateTask = async (id: number, task: UpdateTaskInput, userId: number) => {
-  // Use updateMany instead of update — updateMany returns count and won't throw if not found
+  
   const updated = await prisma.task.updateMany({
-    where: { id, userId }, // ✅ ensures the user owns this task
+    where: { id, userId }, 
     data: {
       title: task.title,
       description: task.description,
@@ -34,10 +34,8 @@ export const updateTask = async (id: number, task: UpdateTaskInput, userId: numb
     },
   });
 
-  // If nothing was updated, return null
   if (updated.count === 0) return null;
 
-  // Fetch and return the updated task
   return prisma.task.findUnique({ where: { id } });
 };
 

@@ -8,7 +8,6 @@ export const createTaskHandler = async (req: Request, res: Response) => {
     // Validate request body
     const parsedTask = taskSchema.parse(req.body);
 
-    // ✅ Use authenticated user (added by middleware)
     const userId = (req as any).user?.id || 1; // fallback to 1 if not available yet
 
     const newTask = await insertTask(parsedTask, userId);

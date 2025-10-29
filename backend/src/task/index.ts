@@ -10,7 +10,6 @@ import { deleteTaskHandler } from "./delete";
 const router = Router();
 const SECRET = process.env.JWT_SECRET as string || "default_secret_for_dev";
 
-// Extend Request with user info added by JWT middleware
 interface AuthenticatedRequest extends Request {
   user?: { username: string; id: number };
 }
@@ -24,14 +23,12 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextF
   jwt.verify(token, SECRET, (err, payload) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
 
-    // Ensure payload shape matches your token creation
-    // e.g. jwt.sign({ username, id }, SECRET)
+    
     req.user = payload as { username: string; id: number };
     next();
   });
 }
 
-// Routes — delegate to modular handlers
 router.get("/", authenticateToken, (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
   fetchTasksHandler(req, res).catch(next)
 );
@@ -40,12 +37,10 @@ router.post("/", authenticateToken, (req: AuthenticatedRequest, res: Response, n
   createTaskHandler(req, res).catch(next)
 );
 
-// Update uses updateTaskHandler (which expects req.user to exist and calls query.updateTask(id, data, userId))
 router.put("/:id", authenticateToken, (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
   updateTaskHandler(req, res).catch(next)
 );
 
-// Delete uses deleteTaskHandler (which expects req.user to exist and calls query.deleteTask(id, userId))
 router.delete("/:id", authenticateToken, (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
   deleteTaskHandler(req, res).catch(next)
 );
