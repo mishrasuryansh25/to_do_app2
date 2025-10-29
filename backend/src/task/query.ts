@@ -23,20 +23,32 @@ export const getTasks = async (userId?: number) => {
 };
 
 // UPDATE task
-export const updateTask = async (id: number, task: UpdateTaskInput) => {
-  return await prisma.task.update({
-    where: { id },
+export const updateTask = async (id: number, task: UpdateTaskInput, userId: number) => {
+  // Use updateMany instead of update — updateMany returns count and won't throw if not found
+  const updated = await prisma.task.updateMany({
+    where: { id, userId }, // ✅ ensures the user owns this task
     data: {
       title: task.title,
       description: task.description,
       status: task.status,
     },
   });
+
+  // If nothing was updated, return null
+  if (updated.count === 0) return null;
+
+  // Fetch and return the updated task
+  return prisma.task.findUnique({ where: { id } });
 };
 
 // DELETE task
-export const deleteTask = async (id: number) => {
-  return await prisma.task.delete({
-    where: { id },
+export const deleteTask = async (id: number, userId: number) => {
+  const deleted = await prisma.task.deleteMany({
+    where: { id, userId },
   });
+
+  if (deleted.count === 0) return null;
+
+  return { id };
 };
+

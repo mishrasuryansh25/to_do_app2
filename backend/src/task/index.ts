@@ -1,76 +1,53 @@
+// src/routes/index.ts
 import { Router, Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { v4 as uuidv4 } from "uuid"; // ✅ generate unique IDs
+
+import { createTaskHandler } from "./create";
+import { fetchTasksHandler } from "./fetch";
+import { updateTaskHandler } from "./update";
+import { deleteTaskHandler } from "./delete";
 
 const router = Router();
-const SECRET = process.env.JWT_SECRET as string;
+const SECRET = process.env.JWT_SECRET as string || "default_secret_for_dev";
 
-// Extend Request type
+// Extend Request with user info added by JWT middleware
 interface AuthenticatedRequest extends Request {
-  user?: { username: string; id: string };
+  user?: { username: string; id: number };
 }
 
-// Middleware for JWT auth
+// JWT auth middleware
 function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No token provided" });
 
-  jwt.verify(token, SECRET, (err, user) => {
+  jwt.verify(token, SECRET, (err, payload) => {
     if (err) return res.status(403).json({ message: "Invalid token" });
-    req.user = user as { username: string; id: string };
+
+    // Ensure payload shape matches your token creation
+    // e.g. jwt.sign({ username, id }, SECRET)
+    req.user = payload as { username: string; id: number };
     next();
   });
 }
 
-// Example in-memory tasks (replace later with Prisma DB calls)
-let tasks: { id: string; username: string; title: string; description: string; status: string }[] = [];
+// Routes — delegate to modular handlers
+router.get("/", authenticateToken, (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
+  fetchTasksHandler(req, res).catch(next)
+);
 
-// ✅ GET all tasks for logged-in user
-router.get("/", authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  const username = req.user?.username;
-  if (!username) return res.status(403).json({ message: "Unauthorized" });
-  res.json(tasks.filter((t) => t.username === username));
-});
+router.post("/", authenticateToken, (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
+  createTaskHandler(req, res).catch(next)
+);
 
-// ✅ POST add new task
-router.post("/", authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  const username = req.user?.username;
-  if (!username) return res.status(403).json({ message: "Unauthorized" });
+// Update uses updateTaskHandler (which expects req.user to exist and calls query.updateTask(id, data, userId))
+router.put("/:id", authenticateToken, (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
+  updateTaskHandler(req, res).catch(next)
+);
 
-  const { title, description, status } = req.body;
-  if (!title || !description) {
-    return res.status(400).json({ message: "Title and description are required" });
-  }
-
-  const newTask = {
-    id: uuidv4(),
-    username,
-    title,
-    description,
-    status: status || "pending", // default status
-  };
-
-  tasks.push(newTask);
-  res.json({ message: "Task added successfully", task: newTask });
-});
-
-// ✅ PUT update task (title/description/status)
-router.put("/:id", authenticateToken, (req: AuthenticatedRequest, res: Response) => {
-  const username = req.user?.username;
-  if (!username) return res.status(403).json({ message: "Unauthorized" });
-
-  const { id } = req.params;
-  const { title, description, status } = req.body;
-
-  const task = tasks.find((t) => t.id === id && t.username === username);
-  if (!task) return res.status(404).json({ message: "Task not found" });
-
-  if (title) task.title = title;
-  if (description) task.description = description;
-  if (status) task.status = status;
-
-  res.json({ message: "Task updated successfully", task });
-});
+// Delete uses deleteTaskHandler (which expects req.user to exist and calls query.deleteTask(id, userId))
+router.delete("/:id", authenticateToken, (req: AuthenticatedRequest, res: Response, next: NextFunction) =>
+  deleteTaskHandler(req, res).catch(next)
+);
 
 export default router;
