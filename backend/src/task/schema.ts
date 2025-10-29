@@ -7,7 +7,7 @@ export const taskSchema = z.object({
   status: z.enum(["pending", "in-progress", "completed"]).optional(), // ✅ replaces completed
 });
 
-// UPDATE task schema (all fields optional)
+// UPDATE task schema 
 export const updateTaskSchema = taskSchema.partial();
 
 // DELETE task schema
